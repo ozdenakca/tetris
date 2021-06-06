@@ -1,2 +1,3 @@
-# tetris
-pixi.js based tetris game
+# test
+
+npm i & npm start
