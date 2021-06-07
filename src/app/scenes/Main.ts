@@ -2,6 +2,7 @@ import "pixi-spine";
 import { Scene } from "../types/Scene";
 import { Piece } from "../components/Piece";
 import { Board } from "../components/Board";
+import { Container } from "pixi.js";
 
 //our main scene
 
@@ -49,21 +50,35 @@ export class Main extends Scene {
   private _currentBlock: Piece;
   private _board: Board;
   private _interval: any;
+  private _container: PIXI.Container;
 
   public init() {
     document.addEventListener("keydown", this.onKeyDown.bind(this));
     this._board = new Board(this.game, 0, 0, BOARD_DIMENSIONS, this);
+    this.createMaskContainer();
     this.generateRandomBlock();
     this.start();
   }
 
   public dispose() {}
 
+  private createMaskContainer() {
+    this._container = new Container();
+    const mask = new PIXI.Graphics().beginFill(0xffffff, 1).drawRect(0, 110, 600, 900).endFill();
+    this._container.mask = mask;
+    this._container.addChild(mask);
+    this.addChild(this._container);
+  }
+
   private newGame() {
+    clearInterval(this._interval);
+    this._container.removeChildren();
     this.removeChildren();
     this._board = new Board(this.game, 0, 0, BOARD_DIMENSIONS, this);
+    this.createMaskContainer();
     this.generateRandomBlock();
     this.start();
+    document.addEventListener("keydown", this.onKeyDown.bind(this));
   }
 
   private start() {
@@ -72,11 +87,12 @@ export class Main extends Scene {
   }
 
   private generateRandomBlock() {
+    this._container.removeChild(this._currentBlock);
     this._currentBlock = new Piece(
       BLOCK_INDICES[Math.floor(Math.random() * 100) % BLOCK_INDICES.length],
       this
     );
-    this.addChild(this._currentBlock);
+    this._container.addChild(this._currentBlock);
   }
 
   private onKeyDown(event) {
@@ -147,6 +163,7 @@ export class Main extends Scene {
           continue;
         }
         if (this._currentBlock.coordinates.y + rowIndex < 0) {
+          document.removeEventListener("keydown", this.onKeyDown.bind(this));
           alert("Game Over");
           this.newGame();
           break;
